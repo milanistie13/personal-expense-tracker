@@ -42,15 +42,15 @@
 }
 
 /* Category Colors */
-.category-fauzi { color: #ec407a; }
-.category-frien { color: #ffa726; }
-.category-dapur { color: #66bb6a; }
-.category-snack { color: #42a5f5; }
-.category-harian { color: #ab47bc; }
-.category-transportasi { color: #78909c; }
-.category-rumah { color: #4CAF50; }
-.category-uwais { color: #FF7043; }
-.category-tak-terduga { color: #8D6E63; }
+.category-fauzi { color: #ec407a; font-weight: bold;}
+.category-frien { color: #ffa726; font-weight: bold; }
+.category-dapur { color: #66bb6a; font-weight: bold; }
+.category-snack { color: #42a5f5; font-weight: bold; }
+.category-harian { color: #ab47bc; font-weight: bold; }
+.category-transportasi { color: #78909c; font-weight: bold; }
+.category-rumah { color: #4CAF50; font-weight: bold; }
+.category-uwais { color: #FF7043; font-weight: bold; }
+.category-tak-terduga { color: #8D6E63; font-weight: bold; }
 
 .expense-item {
   background: #fff;
