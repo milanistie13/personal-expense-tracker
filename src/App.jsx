@@ -170,11 +170,17 @@ const ReportDocument = ({ expenses, totalExpenses }) => {
 const App = () => {
   const [expenses, setExpenses] = useState([])
   const [darkMode, setDarkMode] = useState(false)
-  const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
-    category: categories[0],
-    description: '',
-    amount: ''
+  const [formData, setFormData] = useState(() => {
+    // Check localStorage for saved date
+    const savedDate = localStorage.getItem('selectedDate');
+    const today = new Date().toISOString().split('T')[0];
+    
+    return {
+      date: savedDate || today,
+      category: categories[0],
+      description: '',
+      amount: ''
+    }
   })
 
   useEffect(() => {
@@ -183,7 +189,13 @@ const App = () => {
   }, [])
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
+    const newFormData = { ...formData, [e.target.name]: e.target.value };
+    setFormData(newFormData);
+    
+    // If date changed, save to localStorage
+    if (e.target.name === 'date') {
+      localStorage.setItem('selectedDate', newFormData.date);
+    }
   }
 
   const handleSubmit = (e) => {
