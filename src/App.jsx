@@ -5,19 +5,22 @@ import { MdDarkMode, MdLightMode } from 'react-icons/md'
 import { PDFDownloadLink, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 import './App.css'
 
-ChartJS.register(ArcElement, Tooltip, Legend)
+ChartJS.register(ArcElement, Tooltip, Legend);
 
-const categories = [
-  'Fauzi',
-  'Frien',
-  'Dapur',
-  'Snack',
-  'Harian',
-  'Transportasi',
-  'Rumah',
-  'Uwais',
-  'Tak Terduga'
-]
+const categoryColors = {
+  'Fauzi': '#ec407a',
+  'Frien': '#ffa726',
+  'Dapur': '#66bb6a',
+  'Snack': '#42a5f5',
+  'Harian': '#ab47bc',
+  'Transportasi': '#78909c',
+  'Rumah': '#4CAF50',
+  'Uwais': '#FF7043',
+  'Tak Terduga': '#8D6E63'
+};
+
+const categories = Object.keys(categoryColors)
+
 
 // PDF Styles
 const styles = StyleSheet.create({
@@ -249,17 +252,7 @@ const App = () => {
             .filter(exp => exp.category === cat)
             .reduce((sum, exp) => sum + exp.amount, 0)
         ),
-        backgroundColor: [
-          '#FF6384',
-          '#36A2EB',
-          '#FFCE56',
-          '#4BC0C0',
-          '#9966FF',
-          '#FF9F40',
-          '#FFCD56',
-          '#C9CBCF',
-          '#4D5360'
-        ]
+        backgroundColor: Object.values(categoryColors)
       }
     ]
   }
@@ -342,7 +335,9 @@ const App = () => {
           <div key={expense.id} className="expense-item">
             <div className="expense-details">
               <span>{expense.date}</span>
-              <span>{expense.category}</span>
+              <span className={`category-${expense.category.toLowerCase().replace(/ /g, '-')}`}>
+                {expense.category}
+              </span>
               <span>{expense.description}</span>
               <span>Rp {expense.amount.toLocaleString('id-ID')}</span>
             </div>
@@ -361,7 +356,7 @@ const App = () => {
           onClick={handleReset}
           className="reset-btn"
         >
-          Reset Semua Data
+          Reset
         </button>
         
         <PDFDownloadLink
@@ -369,7 +364,7 @@ const App = () => {
           fileName={`laporan-pengeluaran-${new Date().toISOString().split('T')[0]}.pdf`}
           className="download-btn"
         >
-          {({ loading }) => (loading ? 'Menyiapkan laporan...' : 'Unduh Laporan')}
+          {({ loading }) => (loading ? 'Menyiapkan laporan...' : 'Unduh')}
         </PDFDownloadLink>
       </div>
     </div>
