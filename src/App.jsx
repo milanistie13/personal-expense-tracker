@@ -276,12 +276,6 @@ const App = () => {
 
   return (
     <div className={`container ${darkMode ? 'dark-mode' : ''}`}>
-      <button 
-        onClick={() => setDarkMode(!darkMode)}
-        className="mode-toggle"
-      >
-        {darkMode ? <MdLightMode /> : <MdDarkMode />}
-      </button>
 
       <h1>Pelacak Pengeluaran</h1>
 
