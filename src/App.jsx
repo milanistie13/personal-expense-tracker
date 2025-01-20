@@ -109,36 +109,44 @@ const ReportDocument = ({ expenses, totalExpenses }) => {
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <Text style={styles.title}>Laporan Pengeluaran</Text>
-          <Text style={styles.date}>
-            {new Date().toLocaleDateString('id-ID', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric'
-            })}
-          </Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Detail Pengeluaran</Text>
-          <View style={[styles.table, styles.tableHeader]}>
-            <View style={styles.tableRow}>
-              <Text style={styles.tableCell}>Tanggal</Text>
-              <Text style={styles.tableCell}>Kategori</Text>
-              <Text style={styles.tableCell}>Deskripsi</Text>
-              <Text style={styles.tableCell}>Jumlah</Text>
+        {/* Group expenses by category */}
+        {categories.map(category => {
+          const categoryExpenses = expenses
+            .filter(expense => expense.category === category)
+            .sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+          if (categoryExpenses.length === 0) return null;
+
+          return (
+            <View style={styles.section} key={category}>
+              <Text style={styles.sectionTitle}>Kategori: {category}</Text>
+              <View style={[styles.table, styles.tableHeader]}>
+                <View style={styles.tableRow}>
+                  <Text style={styles.tableCell}>Tanggal</Text>
+                  <Text style={styles.tableCell}>Deskripsi</Text>
+                  <Text style={styles.tableCell}>Jumlah</Text>
+                </View>
+              </View>
+              {categoryExpenses.map(expense => (
+                <View style={styles.tableRow} key={expense.id}>
+                  <Text style={styles.tableCell}>{expense.date}</Text>
+                  <Text style={styles.tableCell}>{expense.description}</Text>
+                  <Text style={styles.tableCell}>
+                    Rp {expense.amount.toLocaleString('id-ID')}
+                  </Text>
+                </View>
+              ))}
+              <View style={styles.tableRow}>
+                <Text style={[styles.tableCell, {fontWeight: 'bold'}]}>Total {category}</Text>
+                <Text style={[styles.tableCell, {fontWeight: 'bold'}]}>
+                  Rp {categoryExpenses.reduce((sum, exp) => sum + exp.amount, 0).toLocaleString('id-ID')}
+                </Text>
+              </View>
             </View>
-          </View>
-          {expenses.map((expense) => (
-            <View style={styles.tableRow} key={expense.id}>
-              <Text style={styles.tableCell}>{expense.date}</Text>
-              <Text style={styles.tableCell}>{expense.category}</Text>
-              <Text style={styles.tableCell}>{expense.description}</Text>
-              <Text style={styles.tableCell}>
-                Rp {expense.amount.toLocaleString('id-ID')}
-              </Text>
-            </View>
-          ))}
-        </View>
+          );
+        })}
 
         {/* Category Summary Section */}
         <View style={styles.section}>
@@ -173,32 +181,41 @@ const ReportDocument = ({ expenses, totalExpenses }) => {
 const App = () => {
   const [expenses, setExpenses] = useState([])
   const [darkMode, setDarkMode] = useState(false)
-  const [formData, setFormData] = useState(() => {
-    // Check localStorage for saved date
-    const savedDate = localStorage.getItem('selectedDate');
-    const today = new Date().toISOString().split('T')[0];
-    
-    return {
-      date: savedDate || today,
+    const [formData, setFormData] = useState({
+      date: new Date().toISOString().split('T')[0],
       category: categories[0],
       description: '',
       amount: ''
-    }
-  })
+    })
+  const [allDescriptions, setAllDescriptions] = useState([])
+  const [suggestions, setSuggestions] = useState([])
 
   useEffect(() => {
     const savedExpenses = JSON.parse(localStorage.getItem('expenses')) || []
     setExpenses(savedExpenses)
+    
+    // Get all unique descriptions from saved expenses
+    const descriptions = [...new Set(savedExpenses.map(exp => exp.description))]
+    setAllDescriptions(descriptions)
   }, [])
 
   const handleInputChange = (e) => {
-    const newFormData = { ...formData, [e.target.name]: e.target.value };
+    const { name, value } = e.target;
+    const newFormData = { ...formData, [name]: value };
     setFormData(newFormData);
     
-    // If date changed, save to localStorage
-    if (e.target.name === 'date') {
-      localStorage.setItem('selectedDate', newFormData.date);
+    // If description changed, update suggestions
+    if (name === 'description') {
+      const filteredSuggestions = allDescriptions.filter(desc => 
+        desc.toLowerCase().includes(value.toLowerCase())
+      )
+      setSuggestions(filteredSuggestions)
     }
+  }
+
+  const handleSuggestionClick = (suggestion) => {
+    setFormData(prev => ({ ...prev, description: suggestion }))
+    setSuggestions([])
   }
 
   const handleSubmit = (e) => {
@@ -296,23 +313,45 @@ const App = () => {
 
         <div className="form-group">
           <label>Deskripsi:</label>
-          <input
-            type="text"
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            placeholder="Masukkan deskripsi pengeluaran"
-            required
-          />
+          <div className="description-input">
+            <input
+              type="text"
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              placeholder="Masukkan deskripsi pengeluaran"
+              required
+            />
+            {suggestions.length > 0 && (
+              <ul className="suggestions">
+                {suggestions.map((suggestion, index) => (
+                  <li 
+                    key={index}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                  >
+                    {suggestion}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
 
         <div className="form-group">
           <label>Jumlah (IDR):</label>
           <input
-            type="number"
+            type="text"
             name="amount"
-            value={formData.amount}
-            onChange={handleInputChange}
+            value={formData.amount ? Number(formData.amount.replace(/\D/g, '')).toLocaleString('id-ID') : ''}
+            onChange={(e) => {
+              const rawValue = e.target.value.replace(/\D/g, '');
+              handleInputChange({
+                target: {
+                  name: 'amount',
+                  value: rawValue
+                }
+              });
+            }}
             placeholder="Masukkan jumlah"
             required
           />
@@ -331,7 +370,15 @@ const App = () => {
 
       <div className="expense-list">
         <h2>Daftar Pengeluaran</h2>
-        {expenses.map((expense) => (
+        {expenses
+          .sort((a, b) => new Date(b.date) - new Date(a.date))
+          .filter(expense => {
+            const expenseDate = new Date(expense.date);
+            const today = new Date();
+            const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            return expenseDate >= firstOfMonth && expenseDate <= today;
+          })
+          .map((expense) => (
           <div key={expense.id} className="expense-item">
             <div className="expense-details">
               <span>{expense.date}</span>
@@ -361,7 +408,7 @@ const App = () => {
         
         <PDFDownloadLink
           document={<ReportDocument expenses={expenses} totalExpenses={totalExpenses} />}
-          fileName={`laporan-pengeluaran-${new Date().toISOString().split('T')[0]}.pdf`}
+          fileName="laporan-pengeluaran.pdf"
           className="download-btn"
         >
           {({ loading }) => (loading ? 'Menyiapkan laporan...' : 'Unduh')}
